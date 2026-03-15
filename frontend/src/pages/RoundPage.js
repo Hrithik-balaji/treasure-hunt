@@ -232,7 +232,7 @@ export default function RoundPage() {
           )}
 
           {/* Round Header / Digit Tracker for Round 2 */}
-          {num === '2' && team && (
+          {num === '2' && team && team.round2Digits && (
             <div style={{ display:'flex', gap:12, justifyContent:'center', marginBottom:48 }}>
               {team.round2Digits.map((d, i) => (
                 <div key={i} style={{ width:48, height:64, background:'rgba(240,192,64,0.03)', border:`2px solid ${d==='?'?'rgba(240,192,64,0.1)':'#c9a84c'}`, display:'flex', alignItems:'center', justifyContent:'center', color:d==='?'?'#4a3a1a':C.gold, fontSize:28, fontFamily:C.mono, textShadow:d!=='?'?`0 0 15px ${C.goldDim}`:'none' }}>{d}</div>
