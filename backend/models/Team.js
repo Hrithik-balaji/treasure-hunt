@@ -30,6 +30,10 @@ const TeamSchema = new mongoose.Schema(
     assignedPinDigits: { type: [Number], default: [] }, // NEW: unique digits for this team
     round3PinAttempts: { type: Number, default: 0 },
     round3Unlocked: { type: Boolean, default: false },
+
+    // Hint System – Round 2
+    // Stores question indices where a hint was used (e.g. [0, 2] means Q1 and Q3)
+    round2HintsUsed: { type: [Number], default: [] },
   },
   { timestamps: true }
 );

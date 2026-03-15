@@ -18,6 +18,10 @@ const UserSchema = new mongoose.Schema(
     },
 
     isVerified: { type: Boolean, default: true },
+    
+    // NEW FOR ROUND 3: Isolated PIN attempt tracking per user
+    round3PinAttempts: { type: Number, default: 0 },
+    isEliminated:      { type: Boolean, default: false },
   },
   { timestamps: true }
 );

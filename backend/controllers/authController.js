@@ -102,6 +102,8 @@ exports.register = async (req, res, next) => {
         role:              user.role,
         team:              user.team,
         participationType: user.participationType,
+        isEliminated:      user.isEliminated,
+        round3PinAttempts: user.round3PinAttempts,
       },
     });
 
@@ -152,6 +154,8 @@ exports.login = async (req, res, next) => {
         role:              user.role,
         team:              user.team,
         participationType: user.participationType,
+        isEliminated:      user.isEliminated,
+        round3PinAttempts: user.round3PinAttempts,
       },
     });
   } catch (err) {

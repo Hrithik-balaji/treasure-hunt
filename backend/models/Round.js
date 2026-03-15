@@ -14,6 +14,7 @@ const QuestionSchema = new mongoose.Schema({
   type:         { type: String, enum: ['mcq', 'text', 'code'], default: 'text' },
   options:      [String],           // for MCQ: ['FTP','HTTP','SMTP','TCP']
   correctAnswer: { type: String, required: true },
+  altAnswers:   [String],           // alternate accepted answers
   points:       { type: Number, default: 10 },
   hint:         { type: String, default: '' },  // optional hint
   unlockDigit:  { type: Number, min: 0, max: 9 }, // for Round 2
@@ -60,13 +61,18 @@ const RoundSchema = new mongoose.Schema(
 );
 
 // ── METHOD: grade a submission ───────────────────────────
-// Takes an array of answers and returns the earned score
-RoundSchema.methods.gradeAnswers = function (answers) {
+// Takes an array of answers and an optional hintsUsed array of question indices.
+// Returns the earned score, applying 50% deduction for hint-assisted correct answers.
+RoundSchema.methods.gradeAnswers = function (answers, hintsUsed = []) {
   let score = 0;
   this.questions.forEach((q, i) => {
     const given   = (answers[i] || '').toString().trim().toLowerCase();
     const correct = q.correctAnswer.toString().trim().toLowerCase();
-    if (given === correct) score += q.points;
+    if (given === correct) {
+      const pts = q.points;
+      // 50% deduction if a hint was used for this question
+      score += hintsUsed.includes(i) ? Math.floor(pts * 0.5) : pts;
+    }
   });
   return score;
 };

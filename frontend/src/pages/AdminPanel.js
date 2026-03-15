@@ -74,9 +74,24 @@ const StatCard = ({ icon, label, value, sub, color='255,192,64' }) => (
 /* ═══════════════════════════════════════════
    OVERVIEW TAB
 ═══════════════════════════════════════════ */
-function OverviewTab() {
+function OverviewTab({ showToast }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  
+  const handleResetTreasure = async () => {
+    setResetting(true);
+    try {
+      const res = await api.post('/admin/reset-treasure');
+      showToast(res.data.message, 'success');
+      setShowResetConfirm(false);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Reset failed', 'err');
+    } finally {
+      setResetting(false);
+    }
+  };
 
   useEffect(() => {
     api.get('/admin/overview').then(r => setData(r.data.overview)).finally(() => setLoading(false));
@@ -169,6 +184,37 @@ function OverviewTab() {
           </table>
         </div>
       </div>
+
+      {/* Experimental / Game State Controls */}
+      <div style={{ ...sx.card, padding: '24px', background: 'linear-gradient(135deg, #1a1610, #0d0a05)', border: `1px solid ${C.goldDim}`, marginTop: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: C.gold }}>🏆 Global Treasure Reset</div>
+            <div style={{ fontSize: 13, color: C.textMid, marginTop: 4 }}>Clears the first-winner record. Allow new teams to compete for the first-place title.</div>
+          </div>
+          <button onClick={() => setShowResetConfirm(true)} style={sx.btn('danger')}>
+            ↺ RESET TREASURE STATE
+          </button>
+        </div>
+      </div>
+
+      {showResetConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
+          <div style={{ ...sx.card, padding: 40, maxWidth: 420, textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 20 }}>⚠️</div>
+            <div style={{ fontWeight: 700, fontSize: 20, color: C.red, marginBottom: 16 }}>CONFIRM RESET?</div>
+            <p style={{ color: C.textMid, fontSize: 14, lineHeight: 1.6, marginBottom: 30 }}>
+              Are you sure you want to reset the treasure? This will allow it to be claimed again.
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => setShowResetConfirm(false)} style={{ ...sx.btn('ghost'), flex: 1 }}>CANCEL</button>
+              <button onClick={handleResetTreasure} disabled={resetting} style={{ ...sx.btn('danger'), flex: 1 }}>
+                {resetting ? 'RESETTING...' : 'CONFIRM RESET'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -214,6 +260,11 @@ function QuestionEditor({ questions, onChange }) {
               <label style={sx.label}>Points</label>
               <input type="number" value={q.points} onChange={e=>updateQ(i,'points',Number(e.target.value))}
                 style={sx.input} min={1} />
+            </div>
+            <div>
+              <label style={sx.label}>Alt Answers (comma-separated)</label>
+              <input value={(q.altAnswers||[]).join(', ')} onChange={e=>updateQ(i,'altAnswers',e.target.value.split(',').map(s=>s.trim()).filter(s=>s))}
+                style={sx.input} placeholder="e.g. blackboard, dry erase board" />
             </div>
             <div>
               <label style={sx.label}>Unlock Digit (RD2 only)</label>
@@ -779,7 +830,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Tab content */}
-        {tab==='overview' && <OverviewTab />}
+        {tab==='overview' && <OverviewTab showToast={showToast} />}
         {tab==='rounds'   && <RoundsTab   showToast={showToast} />}
         {tab==='teams'    && <TeamsTab    showToast={showToast} />}
         {tab==='users'    && <UsersTab    showToast={showToast} />}
