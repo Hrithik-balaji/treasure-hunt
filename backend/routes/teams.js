@@ -30,6 +30,19 @@ router.get('/my-team', protect, async (req, res, next) => {
     }
     const team = await Team.findById(req.user.team).populate('members', 'username pirateName');
     if (!team) return res.status(404).json({ message: '🏴‍☠️ Crew not found!' });
+
+    // FIX: Self-repair data if missing for Round 2
+    let modified = false;
+    if (!team.assignedPinDigits || team.assignedPinDigits.length === 0) {
+      team.assignedPinDigits = Array.from({ length: 5 }, () => Math.floor(Math.random() * 10));
+      modified = true;
+    }
+    if (!team.round2Digits || team.round2Digits.length === 0) {
+      team.round2Digits = ["?", "?", "?", "?", "?"];
+      modified = true;
+    }
+    if (modified) await team.save();
+
     res.json({ team });
   } catch (err) {
     next(err);
