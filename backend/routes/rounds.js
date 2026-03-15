@@ -41,35 +41,6 @@ router.get('/', protect, async (req, res, next) => {
   }
 });
 
-// ── GET single round with questions ───────────────────
-router.get('/:roundNumber', protect, async (req, res, next) => {
-  try {
-    // FIX: Validate roundNumber is a positive integer
-    const roundNum = parseInt(req.params.roundNumber, 10);
-    if (isNaN(roundNum) || roundNum < 1) {
-      return res.status(400).json({ message: '🦜 Invalid round number!' });
-    }
-
-    const round = await Round.findOne({ roundNumber: roundNum });
-    if (!round) return res.status(404).json({ message: 'Round not found' });
-
-    if (req.user.role !== 'admin') {
-      const safeRound = round.toObject();
-      // Strip correct answers from player view
-      safeRound.questions = safeRound.questions.map(({ correctAnswer, ...safe }) => safe);
-      const teamId = req.user.team?._id?.toString();
-      safeRound.alreadySubmitted = teamId
-        ? round.submissions.some(s => s.team.toString() === teamId)
-        : false;
-      return res.json({ round: safeRound });
-    }
-
-    res.json({ round });
-  } catch (err) {
-    next(err);
-  }
-});
-
 // ── POST verify a Round 2 clue ────────────────────────
 router.post('/verify-clue', protect, async (req, res, next) => {
   try {
@@ -115,6 +86,38 @@ router.post('/verify-clue', protect, async (req, res, next) => {
 
 // ── POST unlock Round 3 with PIN ───────────────────────
 router.post('/unlock', protect, async (req, res, next) => {
+  try {
+    const { pin } = req.body;
+    const teamId = req.user.team?._id;
+    if (!teamId) return res.status(400).json({ message: 'No crew found!' });
+
+    const team = await Team.findById(teamId);
+    if (team.isEliminated) return res.status(403).json({ message: '💀 Your crew is eliminated!' });
+    if (team.round3Unlocked) return res.json({ unlocked: true });
+
+    // The PIN is the concatenation of the team's UNIQUE generated digits
+    if (!team.assignedPinDigits || team.assignedPinDigits.length < 5) {
+      return res.status(400).json({ message: '⚓ You haven\'t collected all your clues yet!' });
+    }
+
+    const correctPin = team.assignedPinDigits.join('');
+
+    if (pin === correctPin) {
+      team.round3Unlocked = true;
+      await team.save();
+      return res.json({ unlocked: true, message: '🔓 Round 3 Unlocked!' });
+    } else {
+      team.round3PinAttempts += 1;
+      await team.save();
+      return res.status(400).json({ message: '❌ Wrong PIN! Try again.' });
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── GET single round with questions ───────────────────
+router.get('/:roundNumber', protect, async (req, res, next) => {
   try {
     const { pin } = req.body;
     const teamId = req.user.team?._id;
