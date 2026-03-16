@@ -107,19 +107,22 @@ mongoose
   .then(() => {
     console.log('⚓ MongoDB connected – anchors aweigh!');
     const PORT = process.env.PORT || 5000;
-    const server = app.listen(PORT, () =>
+    // Bind to 0.0.0.0 so Render's port scanner can detect the open port
+    const server = app.listen(PORT, '0.0.0.0', () =>
       console.log(`🏴‍☠️ Server sailing on port ${PORT}`)
     );
 
     // ── GRACEFUL SHUTDOWN ──────────────────────────────
-    // FIX: was missing – abrupt kills left DB connections open
+    // Use promise-based close() — Mongoose v8 removed the callback overload
     const shutdown = (signal) => {
       console.log(`\n${signal} received. Shutting down gracefully...`);
       server.close(() => {
-        mongoose.connection.close(false, () => {
-          console.log('⚓ MongoDB connection closed. Goodbye!');
-          process.exit(0);
-        });
+        mongoose.connection.close()
+          .then(() => {
+            console.log('⚓ MongoDB connection closed. Goodbye!');
+            process.exit(0);
+          })
+          .catch(() => process.exit(0));
       });
     };
     process.on('SIGTERM', () => shutdown('SIGTERM'));
