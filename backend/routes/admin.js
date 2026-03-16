@@ -14,6 +14,7 @@ const { protect, adminOnly } = require('../middleware/auth');
 const User                   = require('../models/User');
 const Team                   = require('../models/Team');
 const Round                  = require('../models/Round');
+const GameState              = require('../models/GameState');
 
 // All routes in this file require admin
 router.use(protect, adminOnly);
@@ -294,6 +295,23 @@ router.delete('/rounds/:roundNumber/submissions/:teamId', async (req, res, next)
     }
 
     res.json({ message: '🔄 Submission reset! Team can re-submit.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── POST reset global treasure state ───────────────────
+router.post('/reset-treasure', async (req, res, next) => {
+  try {
+    let state = await GameState.findOne();
+    if (state) {
+      state.isFirstWinnerFound = false;
+      state.winnerUser = null;
+      state.winnerTeam = null;
+      state.unlockedAt = null;
+      await state.save();
+    }
+    res.json({ message: '🏆 Treasure has been reset! The race for the chest is back on.' });
   } catch (err) {
     next(err);
   }
