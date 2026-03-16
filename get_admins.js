@@ -3,8 +3,6 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'test';
-
 // Mock a minimal User model for querying
 const UserSchema = new mongoose.Schema({
   username: String,
@@ -22,9 +20,8 @@ async function checkAdmins() {
   }
 
   try {
-    await mongoose.connect(uri, { dbName: MONGO_DB_NAME });
-    console.log(`Connected to DB: ${MONGO_DB_NAME}`);
-    const admins = await User.find({ role: 'admin' }).select('username email');
+    await mongoose.connect(uri);
+    console.log('Connected to DB');    const admins = await User.find({ role: 'admin' }).select('username email');
     if (admins.length > 0) {
       console.log('Admin users found:');
       admins.forEach(a => console.log(`- Username: ${a.username}, Email: ${a.email}`));
