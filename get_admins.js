@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
+dotenv.config();
+
+const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'test';
+
 // Mock a minimal User model for querying
 const UserSchema = new mongoose.Schema({
   username: String,
@@ -11,10 +15,15 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model('User', UserSchema);
 
 async function checkAdmins() {
-  const uri = "mongodb+srv://treasurehunt:Treasure2k26@cluster0.udktw4b.mongodb.net/treasurehunt?retryWrites=true&w=majority";
+  const uri = process.env.MONGO_URI;
+  if (!uri) {
+    console.error('MONGO_URI is missing in environment variables.');
+    process.exit(1);
+  }
+
   try {
-    await mongoose.connect(uri);
-    console.log('Connected to DB');
+    await mongoose.connect(uri, { dbName: MONGO_DB_NAME });
+    console.log(`Connected to DB: ${MONGO_DB_NAME}`);
     const admins = await User.find({ role: 'admin' }).select('username email');
     if (admins.length > 0) {
       console.log('Admin users found:');

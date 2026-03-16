@@ -15,6 +15,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 
 dotenv.config();
 
+const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'test';
 const app = express();
 
 // ── SECURITY MIDDLEWARE ──────────────────────────────────
@@ -100,12 +101,13 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
 // FIX: Added connection-pool options for high-concurrency events
 mongoose
   .connect(process.env.MONGO_URI, {
+    dbName: MONGO_DB_NAME,
     maxPoolSize: 20,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
   })
   .then(() => {
-    console.log('⚓ MongoDB connected – anchors aweigh!');
+    console.log(`MongoDB connected (db: ${MONGO_DB_NAME})`);
     const PORT = process.env.PORT || 5000;
     const server = app.listen(PORT, () =>
       console.log(`🏴‍☠️ Server sailing on port ${PORT}`)
