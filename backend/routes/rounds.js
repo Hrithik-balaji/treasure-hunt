@@ -17,6 +17,7 @@ const Round                = require('../models/Round');
 const Team                 = require('../models/Team');
 const User                 = require('../models/User');
 const GameState            = require('../models/GameState');
+const defaultRounds        = require('../data/defaultRounds');
 
 // ── ADMIN: Seed default questions ─────────────────────
 // FIX: Must come BEFORE /:roundNumber or "seed" is parsed as a round number
@@ -43,8 +44,7 @@ router.get('/', protect, async (req, res, next) => {
   }
 });
 
-// ── POST verify a Round 2 clue ────────────────────────
-router.post('/verify-clue', protect, async (req, res, next) => {
+const verifyClueHandler = async (req, res, next) => {
   try {
     const { roundNumber, questionIndex, answer } = req.body;
     if (roundNumber !== 2 && roundNumber !== 3) return res.status(400).json({ message: 'Only for Round 2 or 3!' });
@@ -92,6 +92,14 @@ router.post('/verify-clue', protect, async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// ── POST verify a Round 2 clue ────────────────────────
+router.post('/verify-clue', protect, verifyClueHandler);
+// Backward compatibility for older frontend path style
+router.post('/:roundNumber(\\d+)/verify-clue', protect, (req, res, next) => {
+  req.body.roundNumber = parseInt(req.params.roundNumber, 10);
+  return verifyClueHandler(req, res, next);
 });
 
 // ── GET Game State ────────────────────────────────────
@@ -215,8 +223,7 @@ router.post('/use-hint', protect, async (req, res, next) => {
   }
 });
 
-// ── POST unlock Round 3 with PIN ───────────────────────
-router.post('/unlock', protect, async (req, res, next) => {
+const unlockHandler = async (req, res, next) => {
   try {
     const { pin } = req.body;
     const teamId = req.user.team?._id;
@@ -268,10 +275,15 @@ router.post('/unlock', protect, async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
+};
+
+// ── POST unlock Round 3 with PIN ───────────────────────
+router.post('/unlock', protect, unlockHandler);
+// Backward compatibility for older frontend path style
+router.post('/:roundNumber(\\d+)/unlock', protect, unlockHandler);
 
 // ── GET single round with questions ───────────────────
-router.get('/:roundNumber', protect, async (req, res, next) => {
+router.get('/:roundNumber(\\d+)', protect, async (req, res, next) => {
   try {
     const roundNum = parseInt(req.params.roundNumber, 10);
     if (isNaN(roundNum) || roundNum < 1) {
@@ -312,7 +324,7 @@ router.get('/:roundNumber', protect, async (req, res, next) => {
 });
 
 // ── POST submit answers for a round ──────────────────
-router.post('/:roundNumber/submit', protect, async (req, res, next) => {
+router.post('/:roundNumber(\\d+)/submit', protect, async (req, res, next) => {
   try {
     const roundNum = parseInt(req.params.roundNumber, 10);
     if (isNaN(roundNum) || roundNum < 1) {
@@ -383,7 +395,7 @@ router.post('/', protect, adminOnly, async (req, res, next) => {
 });
 
 // ── ADMIN: Open/Close a round ─────────────────────────
-router.patch('/:roundNumber/toggle', protect, adminOnly, async (req, res, next) => {
+router.patch('/:roundNumber(\\d+)/toggle', protect, adminOnly, async (req, res, next) => {
   try {
     const roundNum = parseInt(req.params.roundNumber, 10);
     if (isNaN(roundNum)) return res.status(400).json({ message: 'Invalid round number' });
@@ -403,217 +415,5 @@ router.patch('/:roundNumber/toggle', protect, adminOnly, async (req, res, next) 
     next(err);
   }
 });
-
-// ── Default round data ────────────────────────────────
-const defaultRounds = [
-  // ── ROUND 1: Technical Quiz (from brochure + extras) ──────────────────
-  {
-    roundNumber: 1,
-    title: 'Technical Quiz',
-    description: 'A 15-minute written screening round testing Python, networking, data structures, and logical thinking.',
-    durationMinutes: 15,
-    questions: [
-      // ── From brochure ──
-      {
-        text: 'What is the output of: print(2**3)?',
-        type: 'text',
-        correctAnswer: '8',
-        points: 10,
-        hint: 'The ** operator means "to the power of".',
-        order: 1,
-      },
-      {
-        text: 'Which protocol is used to transfer web pages?',
-        type: 'mcq',
-        options: ['FTP', 'HTTP', 'SMTP', 'TCP'],
-        correctAnswer: 'HTTP',
-        points: 10,
-        hint: 'You see it at the start of every URL.',
-        order: 2,
-      },
-      {
-        text: 'Convert binary 1010 to decimal.',
-        type: 'text',
-        correctAnswer: '10',
-        points: 10,
-        hint: 'Each bit is a power of 2: 8+0+2+0.',
-        order: 3,
-      },
-      {
-        text: 'What does CPU stand for?',
-        type: 'text',
-        correctAnswer: 'Central Processing Unit',
-        points: 10,
-        hint: 'The "brain" of the computer.',
-        order: 4,
-      },
-      {
-        text: 'What is the file extension of a Python source file?',
-        type: 'mcq',
-        options: ['.pt', '.py', '.pyt', '.pyn'],
-        correctAnswer: '.py',
-        points: 10,
-        order: 5,
-      },
-      {
-        text: 'Which data structure operates on the FIFO (First In, First Out) principle?',
-        type: 'mcq',
-        options: ['Stack', 'Queue', 'Tree', 'Heap'],
-        correctAnswer: 'Queue',
-        points: 10,
-        hint: 'Think of a ticket line — first person in, first person out.',
-        order: 6,
-      },
-      {
-        text: 'What is the output of: print(len("TECH"))?',
-        type: 'text',
-        correctAnswer: '4',
-        points: 10,
-        hint: 'len() counts characters.',
-        order: 7,
-      },
-      {
-        text: 'What symbol is used to write a single-line comment in Python?',
-        type: 'mcq',
-        options: ['//', '/*', '#', '--'],
-        correctAnswer: '#',
-        points: 10,
-        order: 8,
-      },
-      {
-        text: 'What does HTML stand for?',
-        type: 'text',
-        correctAnswer: 'HyperText Markup Language',
-        points: 10,
-        hint: 'It\'s the standard language for building web pages.',
-        order: 9,
-      },
-      {
-        text: 'Identify the syntax error in: for i in range(5) print(i)',
-        type: 'mcq',
-        options: ['Wrong function name', 'Missing colon after range(5)', 'print needs brackets', 'No error'],
-        correctAnswer: 'Missing colon after range(5)',
-        points: 10,
-        hint: 'All Python block statements end with a colon.',
-        order: 10,
-      },
-      // ── Bonus questions ──
-      {
-        text: 'What is the output of: print(type(3.14))?',
-        type: 'mcq',
-        options: ['<class \'int\'>', '<class \'float\'>', '<class \'str\'>', '<class \'double\'>'],
-        correctAnswer: '<class \'float\'>',
-        points: 10,
-        order: 11,
-      },
-      {
-        text: 'Which keyword is used to define a function in Python?',
-        type: 'mcq',
-        options: ['func', 'define', 'def', 'function'],
-        correctAnswer: 'def',
-        points: 10,
-        order: 12,
-      },
-      {
-        text: 'What is the value of: 7 % 3?',
-        type: 'text',
-        correctAnswer: '1',
-        points: 10,
-        hint: '% is the modulo (remainder) operator.',
-        order: 13,
-      },
-      {
-        text: 'Which of these is a mutable data type in Python?',
-        type: 'mcq',
-        options: ['tuple', 'string', 'list', 'int'],
-        correctAnswer: 'list',
-        points: 10,
-        hint: 'Mutable means you can change it after creation.',
-        order: 14,
-      },
-      {
-        text: 'What does RAM stand for?',
-        type: 'text',
-        correctAnswer: 'Random Access Memory',
-        points: 10,
-        order: 15,
-      },
-    ],
-  },
-
-  // ── ROUND 2: Clue Hunt 🔎 ─────────────────────────────────
-  {
-    roundNumber: 2,
-    title: 'Technical Clue Hunt',
-    description: 'Solve each riddle to find the next hidden location. Each correct answer reveals a secret digit for the master lock.',
-    durationMinutes: 20,
-    questions: [
-      {
-        text: '🔎 Clue 1 – Stationery\n\nI help ideas move from mind to page,\nStudents seek me at every stage.\nPens and papers rest with care,\nYour next clue patiently waits there.\n\nWhat am I?',
-        type: 'text',
-        correctAnswer: 'Stationery',
-        points: 25,
-        unlockDigit: 1,
-        hint: 'Look where pens, papers, and notebooks are sold or stored.',
-        order: 1,
-      },
-      {
-        text: '🔎 Clue 2 – Corridor\n\nI am not a room yet I connect them all,\nFootsteps echo along my wall.\nStudents pass me every hour,\nBetween classes I hold great power.\n\nWhat am I?',
-        type: 'text',
-        correctAnswer: 'Corridor',
-        points: 25,
-        unlockDigit: 2,
-        hint: 'Think of the pathway between classrooms.',
-        order: 2,
-      },
-      {
-        text: '🔎 Clue 3 – Computer Lab\n\nRows of machines silently wait,\nLogic and code decide their fate.\nStudents type commands all day.\n\nWhere am I?',
-        type: 'text',
-        correctAnswer: 'Computer Lab',
-        points: 25,
-        unlockDigit: 3,
-        hint: 'Find the room where programming happens.',
-        order: 3,
-      },
-      {
-        text: '🔎 Clue 4 – Keyboard\n\nI have many keys but open no door,\nLetters and numbers I help explore.\nFind the one where fingers dance,\nYour next clue hides beneath my stance.\n\nWhat am I?',
-        type: 'text',
-        correctAnswer: 'Keyboard',
-        points: 25,
-        unlockDigit: 4,
-        hint: 'Think of the device used to type.',
-        order: 4,
-      },
-      {
-        text: '🔎 Clue 5 – Classroom Board\n\nTeachers write and students stare,\nEquations and notes appear there.\nErase me once, I\'m blank again.\n\nWhat am I?',
-        type: 'text',
-        correctAnswer: 'Whiteboard',
-        altAnswers: ['Blackboard'],
-        points: 25,
-        unlockDigit: 5,
-        hint: 'Where teachers explain lessons. Also accepted: Blackboard.',
-        order: 5,
-      },
-    ],
-  },
-
-  // ── ROUND 3: Master Challenge 🏆 ─────────────────────────────────
-  {
-    roundNumber: 3,
-    title: 'Master Challenge',
-    description: 'The final trial. Solve the logic puzzle to discover the treasure.',
-    durationMinutes: 30,
-    questions: [
-      {
-        text: '🏆 Challenge – Coding Logic Puzzle\n\nConsider the following Python code:\n\nletters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"\nnums = [19, 20, 21, 4, 5, 14, 20, 19]\nfor n in nums:\n    print(letters[n-1], end="")\n\nWhat will be the output of the above code?',
-        type: 'text',
-        correctAnswer: 'STUDENTS',
-        points: 100,
-        hint: 'A-1, B-2, C-3...',
-        order: 1,
-      },
-    ],
-  },
-];
 
 module.exports = router;
