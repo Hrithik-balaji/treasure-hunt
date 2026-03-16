@@ -106,7 +106,7 @@ mongoose
     socketTimeoutMS: 45000,
   })
   .then(() => {
-    console.log('⚓ MongoDB connected – anchors aweigh!');
+    console.log(`MongoDB connected (db: ${mongoose.connection.name})`);
     const PORT = process.env.PORT || 5000;
     // Bind to 0.0.0.0 so Render's port scanner can detect the open port
     const server = app.listen(PORT, '0.0.0.0', () =>
