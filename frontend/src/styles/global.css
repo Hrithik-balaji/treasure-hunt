@@ -87,6 +87,56 @@ body { font-family:'Crimson Pro',serif; background:var(--bg); color:var(--parchm
 @keyframes spin      { to{transform:rotate(360deg)} }
 @keyframes glowPulse { 0%,100%{text-shadow:0 0 20px rgba(201,168,76,0.4)} 50%{text-shadow:0 0 50px rgba(201,168,76,0.8),0 0 80px rgba(201,168,76,0.3)} }
 
+/* General input/textarea base styles */
+input, textarea, select {
+  background-color: rgba(0, 0, 0, 0.4);
+  color: #f5e9c8;
+  font-family: 'Crimson Pro', serif;
+  box-sizing: border-box;
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  font-size: 16px;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-bottom: 2px solid rgba(201, 168, 76, 0.5);
+  outline: none;
+  transition: all 0.3s;
+  display: block;
+}
+
+/* Remove browser-injected icons that shrink or misalign email fields */
+input[type="email"]::-webkit-contacts-auto-fill-button,
+input[type="email"]::-webkit-credentials-auto-fill-button,
+input[type="email"]::-webkit-clear-button,
+input[type="email"]::-webkit-inner-spin-button {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+input[type="email"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ── Browser Autofill Override ─────────────────────────
+   Forces the dark theme for autofilled fields.
+   Using box-shadow inset to "paint" the background. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0d0a05 inset !important;
+  box-shadow:         0 0 0 1000px #0d0a05 inset !important;
+  -webkit-text-fill-color: #f5e9c8 !important;
+  caret-color: #c9a84c !important;
+  transition: background-color 99999s ease-in-out 0s !important;
+  /* Sync dimensions with base inputs */
+  height: 52px !important;
+  margin: 0 !important;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width:6px; }
 ::-webkit-scrollbar-track { background:#0d0a05; }
