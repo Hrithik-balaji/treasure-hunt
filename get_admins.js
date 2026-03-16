@@ -20,8 +20,9 @@ async function checkAdmins() {
   }
 
   try {
-    await mongoose.connect(uri);
-    console.log('Connected to DB');    const admins = await User.find({ role: 'admin' }).select('username email');
+    await mongoose.connect(uri, { dbName: 'treasurehunt' });
+    console.log('Connected to DB');
+    const admins = await User.find({ role: 'admin' }).select('username email');
     if (admins.length > 0) {
       console.log('Admin users found:');
       admins.forEach(a => console.log(`- Username: ${a.username}, Email: ${a.email}`));

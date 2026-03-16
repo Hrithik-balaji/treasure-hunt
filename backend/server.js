@@ -100,6 +100,7 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
 // FIX: Added connection-pool options for high-concurrency events
 mongoose
   .connect(process.env.MONGO_URI, {
+    dbName: 'treasurehunt',
     maxPoolSize: 20,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,

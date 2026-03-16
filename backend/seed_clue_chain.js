@@ -5,7 +5,7 @@ require('dotenv').config();
 
 async function seed() {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, { dbName: 'treasurehunt' });
     console.log('Connected to DB');
     await Round.deleteMany({});
     await Round.insertMany(defaultRounds);
